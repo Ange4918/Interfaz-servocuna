@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Resultados</title>
+
+<style>
+body{font-family:Arial;background:#eef3f8;}
+
+.container{padding:20px;}
+
+.card{
+background:white;padding:20px;margin:20px;border-radius:15px;
+}
+
+.correcta{background:#dbeafe;border:2px solid #3b82f6;}
+.incorrecta{background:#fee2e2;border:2px solid #ef4444;}
+
+.btn{
+padding:12px 20px;margin:10px;border:none;border-radius:10px;cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Resultados de la Evaluación</h2>
+
+<div class="card">
+<h3>Revisión de respuestas</h3>
+<div id="revision"></div>
+</div>
+
+<div class="card">
+<h2 id="score"></h2>
+<p id="detalle"></p>
+<p id="feedback"></p>
+</div>
+
+<button class="btn" onclick="window.location.href='simulacion.html'">Nueva simulación</button>
+<button class="btn" onclick="window.location.href='index.html'">Inicio</button>
+
+</div>
+
+<script>
+
+let score = localStorage.getItem("score");
+let correctas = localStorage.getItem("correctas");
+let total = localStorage.getItem("total");
+
+document.getElementById("score").innerText = score + "/100";
+document.getElementById("detalle").innerText = correctas+" de "+total+" correctas";
+
+let feedback = "";
+
+if (score >= 90) {
+  feedback = "Excelente desempeño. Demuestra comprensión profunda del protocolo de termorregulación neonatal. Las decisiones tomadas son correctas y aplicables en entorno clínico real. Está preparado para el manejo de este tipo de casos.";
+} 
+else if (score >= 70) {
+  feedback = "Buen desempeño. Comprende los aspectos fundamentales del protocolo. Algunas áreas requieren refuerzo. Revise los pasos donde tuvo errores y practique nuevamente para mejorar la precisión en situaciones clínicas críticas.";
+} 
+else if (score >= 50) {
+  feedback = "Desempeño aceptable, pero con áreas importantes de mejora. Es necesario estudiar el protocolo completo y comprender la secuencia correcta de acciones. Practique más antes de aplicar en contexto clínico real.";
+} 
+else {
+  feedback = "Se requiere mayor estudio y práctica. El conocimiento del protocolo es insuficiente. Revise cuidadosamente cada paso, comprenda el fundamento clínico de cada acción y repita la simulación. Consulte con su instructor antes de continuar.";
+}
+
+document.getElementById("feedback").innerText = feedback;
+
+// 🔍 REVISIÓN
+let datos = JSON.parse(localStorage.getItem("resultados"));
+
+let html="";
+
+datos.forEach((p,i)=>{
+
+html+=`<h4>Pregunta ${i+1}</h4><p>${p.pregunta}</p>`;
+
+p.opciones.forEach((op,j)=>{
+
+let clase="";
+
+if(p.correcta.includes(j)) clase="correcta";
+if(p.usuario.includes(j) && !p.correcta.includes(j)) clase="incorrecta";
+
+html+=`<div class="${clase}">${op}</div>`;
+});
+
+html+="<br>";
+
+});
+
+document.getElementById("revision").innerHTML=html;
+
+</script>
+
+</body>
+</html>

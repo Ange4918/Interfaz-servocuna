@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Simulación en ejecución</title>
+
+<style>
+body{font-family:Arial;margin:0;background:#eef3f8;}
+
+.header{
+display:flex;justify-content:space-between;
+padding:15px;background:white;
+}
+
+.container{padding:20px;}
+
+.cards{display:flex;gap:20px;}
+
+.card{
+flex:1;background:white;padding:20px;border-radius:15px;
+}
+
+.big{font-size:28px;}
+
+.alerta{
+margin-top:20px;background:#e0f2fe;
+padding:15px;border-radius:15px;
+display:flex;justify-content:space-between;align-items:center;
+}
+
+.btn{
+padding:10px 20px;border:none;border-radius:10px;color:white;cursor:pointer;
+}
+
+.pause{background:#f59e0b;}
+.stop{background:#ef4444;}
+
+.estado{
+margin-top:20px;background:white;padding:15px;border-radius:15px;
+display:flex;gap:10px;
+}
+
+.estado div{
+flex:1;background:#f1f5f9;padding:10px;border-radius:10px;
+}
+
+.eval{
+margin-top:20px;background:white;padding:20px;border-radius:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<b>Simulación Clínica</b>
+<div>🟢 Conectado</div>
+</div>
+
+<div class="container">
+
+<div class="cards">
+<div class="card">Tiempo restante<br><div class="big" id="tiempo">00:00</div></div>
+<div class="card">Temperatura<br><div class="big">34.3°C</div></div>
+<div class="card">Potencia<br><div class="big">40%</div></div>
+</div>
+
+<div class="alerta">
+<div>Ejecute el protocolo en el panel físico</div>
+<div>
+<button id="btnPausa" class="btn pause" onclick="pausar()">Pausar</button>
+<button class="btn stop" onclick="finalizar()">Finalizar</button>
+</div>
+</div>
+
+<div class="estado">
+<div>Modo: <b>Manual</b></div>
+<div>Alarma: Inactiva</div>
+<div>Objetivo: 36.5°C</div>
+<div>Diferencia: -1.1°C</div>
+</div>
+
+<div class="eval">
+<h3>Evaluación de conocimientos</h3>
+<div id="opciones"></div>
+</div>
+
+</div>
+
+<script>
+
+let caso = localStorage.getItem("caso") || 1;
+let tiempo = localStorage.getItem("tiempo") || 20;
+
+let segundos = tiempo * 60;
+let corriendo = true;
+
+// ⏱ TEMPORIZADOR
+setInterval(()=>{
+if(!corriendo) return;
+
+let min = Math.floor(segundos/60);
+let sec = segundos%60;
+
+document.getElementById("tiempo").innerText =
+String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+
+segundos--;
+
+if(segundos<0) finalizar();
+
+},1000);
+
+// ⏸ PAUSA
+function pausar(){
+corriendo = !corriendo;
+document.getElementById("btnPausa").innerText = corriendo ? "Pausar" : "Reanudar";
+}
+
+// ❌ FINALIZAR + CALIFICACIÓN
+function finalizar(){
+
+let total = preguntas[caso].length;
+let correctas = 0;
+let resultados = [];
+
+preguntas[caso].forEach((q, index)=>{
+
+let seleccionadas = [];
+
+document.querySelectorAll(`input[name="p${index}"]:checked`)
+.forEach(el=>{
+seleccionadas.push(parseInt(el.value));
+});
+
+let correcta = JSON.stringify(seleccionadas.sort()) === JSON.stringify(q.correcta.sort());
+
+if(correcta) correctas++;
+
+resultados.push({
+pregunta: q.p,
+opciones: q.o,
+correcta: q.correcta,
+usuario: seleccionadas
+});
+
+});
+
+let score = Math.round((correctas/total)*100);
+
+localStorage.setItem("score",score);
+localStorage.setItem("correctas",correctas);
+localStorage.setItem("total",total);
+localStorage.setItem("resultados",JSON.stringify(resultados));
+
+window.location.href="resultado.html";
+}
+
+// 🧠 PREGUNTAS
+const preguntas = {
+1:[{p:"Después del autodiagnóstico, ¿qué modo activa automáticamente la servocuna?",o:["Modo Manual","Modo Bebé","Modo Pre-calentamiento","Modo Emergencia"],correcta:[2]},
+{p:"En hipotermia severa, ¿cuál es el rango de potencia recomendado en modo manual?",o:["10-30%","30-50%","60-100%","Siempre 100%"],correcta:[2]},
+{p:"¿Cuándo se debe cambiar de modo manual a modo bebé?",o:["Inmediatamente al colocar al bebé","Cuando la temperatura alcanza ~36-36.5°C","Después de 30 minutos","Nunca, debe permanecer en manual"],correcta:[1]},
+{p:"¿Qué acciones se deben realizar ANTES de cambiar a modo bebé? (Seleccione todas las correctas)",o:["Verificar que la temperatura se aproxime a valores normales","Desactivar la lámpara","Tener listo el sensor de temperatura","Reiniciar el equipo"],correcta:[0,2]},
+{p:"En modo bebé con sensor colocado, ¿quién controla la potencia?",o:["El operador manualmente","El sistema automáticamente según temperatura","Se mantiene fija al 50%","Varía aleatoriamente"],correcta:[1]}],
+
+2:[{p:"En normotermia, ¿qué modo se debe seleccionar después del pre-calentamiento?",o:["Modo manual","Modo bebé","Permanecer en precalentamiento","Modo calibración"],correcta:[1]},
+{p:"¿Cuál es el rango de temperatura objetivo recomendado para normotermia?",o:["34-35°C","35-36°C","36-37°C","37-38°C"],correcta:[2]},
+{p:"¿Cuándo se debe colocar el sensor de temperatura en la piel?",o:["Antes de encender el equipo","Después de seleccionar modo bebé, antes de colocar al neonato","Después de 10 minutos de funcionamiento","No es necesario en normotermia"],correcta:[1]},
+{p:"¿Qué función tiene el temporizador APGAR?",o:["Controla la temperatura automáticamente","Marca intervalos de 1, 5 y 10 minutos para evaluación","Apaga el equipo automáticamente","Calibra el sensor"],correcta:[1]},
+{p:"En modo bebé, ¿qué hace el sistema cuando detecta cambios en la temperatura del neonato?",o:["Activa una alarma","Apaga automáticamente","Regula automáticamente la potencia","No hace nada"],correcta:[2]}],
+
+3:[{p:"En hipertermia, ¿por qué se debe salir del modo pre-calentamiento?",o:["Para ahorrar energía","Para evitar aporte de calor innecesario","Es obligatorio por protocolo","Para calibrar el equipo"],correcta:[1]},
+{p:"¿Qué temperatura objetivo se debe configurar en caso de hipertermia?",o:["34-35°C","35-36°C","36-37°C","37-38°C"],correcta:[1]},
+{p:"Si la temperatura del neonato supera 38.5°C, ¿qué hace el equipo automáticamente?",o:["Aumenta la potencia","Activa alarma y detiene el calentamiento","Cambia a modo manual","No hace nada"],correcta:[1]},
+{p:"En hipertermia, ¿qué acciones realiza el equipo en modo bebé con temperatura objetivo menor? (Seleccione todas las correctas)",o:["Disminuye la potencia automáticamente","Corta la potencia si es necesario","Mantiene potencia constante","Aumenta potencia gradualmente"],correcta:[0,1]},
+{p:"Durante el manejo de hipertermia, ¿qué aspecto es crítico monitorizar continuamente?",o:["El nivel de batería","La temperatura del neonato","La iluminación ambiental","El tiempo transcurrido únicamente"],correcta:[1]}]
+};
+
+// 🧩 MOSTRAR PREGUNTAS
+function cargarPreguntas(){
+
+let lista = preguntas[caso];
+let html = "";
+
+lista.forEach((q,index)=>{
+
+let multiple = q.correcta.length>1;
+
+html+=`<div>
+<h4>Pregunta ${index+1}</h4>
+<p>${q.p}</p>`;
+
+q.o.forEach((op,i)=>{
+html+=`<label>
+<input type="${multiple?'checkbox':'radio'}" name="p${index}" value="${i}">
+${op}
+</label><br>`;
+});
+
+html+=`</div><br>`;
+});
+
+document.getElementById("opciones").innerHTML=html;
+}
+
+cargarPreguntas();
+
+</script>
+
+</body>
+</html>
